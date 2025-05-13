@@ -16,26 +16,25 @@ def run_simulation(equilibrium_override=False):
         alpha = np.radians(alpha_deg)
 
         critical_stiffness = m * omega ** 2 * np.sin(alpha) ** 2
-
-        # Формируем подробный комментарий с числовыми значениями
-        comparison_text = f"(c = {c:.1f} Н/м {'>' if c > critical_stiffness else ('=' if c == critical_stiffness else '<')} {critical_stiffness:.1f} Н/м = mω²sin²α)"
-
         if c > critical_stiffness:
-            stability_comment = f"Устойчивое равновесие {comparison_text}"
+            stability_comment = f"Устойчивое равновесие (c > mω²sin²α)"
             stable = True
         elif c == critical_stiffness:
-            stability_comment = f"Нейтральное равновесие {comparison_text}"
+            stability_comment = f"Нейтральное равновесие (c = mω²sin²α)"
             stable = False
         else:
-            stability_comment = f"Неустойчивое равновесие {comparison_text}"
+            stability_comment = f"Неустойчивое равновесие (c < mω²sin²α)"
             stable = False
 
-        denominator = c - critical_stiffness
+        denominator = c - m * omega ** 2 * np.sin(alpha) ** 2
         equilibrium = (c * l0 - m * g * np.cos(alpha)) / denominator if denominator != 0 else l0
 
         if equilibrium_override:
-            y0 = [equilibrium, 0]
-            t_span = (0, 5)
+            if stable:
+                y0 = [equilibrium, 0]
+            else:
+                y0 = [equilibrium + 0.001, 0]  # Маленькое смещение
+            t_span = (0, 5) if stable else (0, 15)
         else:
             y0 = [float(entry_l_init.get()), float(entry_v_init.get())]
             t_span = (0, 30)
@@ -67,7 +66,6 @@ def run_simulation(equilibrium_override=False):
         rod_down_line, = ax1.plot([], [], [], 'k-', lw=3)
         ring, = ax1.plot([], [], [], 'ro', markersize=10)
         spring_line, = ax1.plot([], [], [], 'orange', lw=2)
-        ax1.plot([0, 0], [0, 0], [0, rod_length], 'g--', lw=2, label='Ось Z')
 
         ax1.set_xlim3d(-5, 5)
         ax1.set_ylim3d(-5, 5)
